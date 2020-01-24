@@ -1,18 +1,23 @@
 package example
 
-import myconsole.{myPutStrLn, myGetStrLn}
-
-import zio._
+import zio.{App, ZIO, UIO, URIO}
 import zio.console.Console
 
-object ZIOApp extends App { // App must be abstract class until traits share jvm backend (see https://github.com/lampepfl/dotty/issues/7328)
+import myconsole.{output, input}
+
+object myconsole {
+  def output(msg: String) = ZIO.accessM[Console](_.console.putStrLn(msg))
+  val input               = ZIO.accessM[Console](_.console.getStrLn)
+}
+
+object Welcome extends App {
 
   def run(args: List[String]): URIO[Console, Int] =
-    myAppLogic.fold(_ => 1, _ => 0)
+    welcomeUser as 0 orElse UIO.succeed(1)
 
-  val myAppLogic =
-    myPutStrLn("Hello! What is your name?") *>
-    myGetStrLn >>= (name =>
-    myPutStrLn(s"Hello, $name, welcome to ZIO!"))
+  val welcomeUser =
+    output("Hello! What is your name?") *>
+    input.flatMap(name =>
+      output(s"Hello, $name, have a great F(by) conference!"))
 
 }
